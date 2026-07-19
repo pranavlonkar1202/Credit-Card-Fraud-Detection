@@ -26,3 +26,53 @@ if uploaded_file is not None:
     st.subheader("Uploaded Dataset")
 
     st.dataframe(df)
+
+expected_columns = [
+    "Time","V1","V2","V3","V4","V5","V6","V7",
+    "V8","V9","V10","V11","V12","V13","V14",
+    "V15","V16","V17","V18","V19","V20",
+    "V21","V22","V23","V24","V25","V26",
+    "V27","V28","Amount"
+]
+
+missing_columns = [col for col in expected_columns if col not in df.columns]
+
+if missing_columns:
+    st.error(f"The uploaded CSV is missing these columns: {missing_columns}")
+    st.stop()
+
+if "Class" in df.columns:
+    X = df.drop("Class", axis=1)
+else:
+    X = df.copy()
+
+X_scaled = scaler.transform(X)
+
+prediction = model.predict(X_scaled)
+
+prediction_label = []
+
+for value in prediction:
+    if value == 0:
+        prediction_label.append("Normal")
+    else:
+        prediction_label.append("Fraud")
+
+df["Prediction"] = prediction_label
+
+st.subheader("Prediction Results")
+
+st.dataframe(df)
+
+probability = model.predict_proba(X_scaled)
+
+df["Fraud Probability"] = probability[:,1]
+
+csv = df.to_csv(index=False)
+
+st.download_button(
+    label="Download Results",
+    data=csv,
+    file_name="prediction_results.csv",
+    mime="text/csv"
+)
